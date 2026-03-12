@@ -79,21 +79,49 @@
 - Result: R²=0.7833 (+25% over run 16). Massive jump.
 - Insight: With 100 aggregated players, LOO trains on 99 players per fold = much more training data per fold. Dramatically more stable and powerful.
 
+### Run 19: Huber loss — CRASH
+- Tried `reg:pseudohubererror` objective. Model diverged completely (negative R²).
+- XGBoost's Huber implementation doesn't play well with the early stopping eval metric setup.
+
+### Run 20: Remove std features — R²=0.7677, RMSE=2.28 mph (DISCARD)
+- Removed the 4 std dev columns to test if they were helping or hurting.
+- Worse without them — std features capture meaningful within-player consistency signal.
+
+### Run 21: More std features (10 columns) — R²=0.7791, RMSE=2.22 mph (DISCARD)
+- Expanded std features to 10 columns (added moment, velo, cog, torso, arm_slot).
+- Slightly worse — the original 4 std columns (speed, elbow/shoulder/thorax transfer) were the right amount.
+
+### Run 22: Top 20 features — R²=0.7712, RMSE=2.26 mph (DISCARD)
+- Increased feature selection from 15 to 20. Worse — 15 still optimal even with LOO.
+
+### Run 23: Polynomial interactions (not completed)
+- Session paused for open source preparation.
+
 ---
 
-## Key Insights So Far
-1. **Feature selection is king** — removing noise features gave the biggest gains (+0.17 R² from runs 1→6)
-2. **15 features is the sweet spot** for this dataset
+## Session Summary
+- **22 completed experiments** over 1 session
+- **Best result: R²=0.7833, RMSE=2.20 mph** (run 18)
+- **Improvement: +78% R² from baseline** (0.4396 → 0.7833)
+- **Key architecture**: Player-level aggregation + LeaveOneGroupOut CV + two-pass feature selection (top 15) + XGBoost with early stopping
+
+## Key Insights
+1. **Feature selection is king** — removing noise features gave the biggest gains (+0.17 R² from runs 1-6)
+2. **15 features is the sweet spot** — tested 10, 12, 15, 20, 25; 15 wins every time
 3. **Energy transfer features dominate** — elbow, thorax distal, and shoulder transfer from foot plant to ball release
 4. **Hyperparameter tuning has diminishing returns** once the feature set is clean
-5. **Ensemble approaches don't help** — single XGBoost is better than blends
-6. **Player-level aggregation works** — removing within-player noise gave a solid boost
+5. **Ensemble approaches don't help** — single XGBoost better than RF blend or multi-seed
+6. **Player-level aggregation works** — removing within-player pitch noise gave a solid boost
 7. **LOO-CV is dramatically better** than 5-fold for 100-player aggregated data — more training data per fold
 8. **The two biggest wins were structural** (feature selection, player aggregation+LOO), not parameter tuning
+9. **Std dev features help** — within-player consistency of key biomechanical metrics is a real signal
+10. **Alternative losses/boosters don't help** — Huber crashed, DART was slower and worse
 
-## Next Ideas
-- Try polynomial interactions between top 3 transfer features
-- Try Huber loss (robust to outliers at extremes)
-- Try removing the std features (might be noise now with aggregation)
-- Try different feature selection threshold (maybe 20 features works better with LOO)
-- Explore whether `p_throws` (handedness) should be used to split models
+## Next Ideas (for future sessions)
+- Polynomial interactions between top 3 transfer features
+- Separate models for R/L throwers
+- Ridge/Lasso as a baseline comparison
+- SHAP values for model interpretability
+- Recursive feature elimination instead of importance-based
+- Try lightgbm
+- Explore non-linear target transforms
