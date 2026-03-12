@@ -64,7 +64,7 @@ def load_data():
     return X, y, groups
 
 
-TOP_N_FEATURES = 25  # Keep top N features from first-pass importance
+TOP_N_FEATURES = 15  # Keep top N features from first-pass importance
 
 
 def select_features(X, y, groups):
